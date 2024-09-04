@@ -10,11 +10,11 @@ import openpyxl
 from openpyxl import styles
 
 # Credentials for Google Cloud Vision
+# Credentials for Google Cloud Vision
 credentials_info = json.loads(os.getenv('GOOGLE_CREDENTIALS'))
 credentials = service_account.Credentials.from_service_account_info(credentials_info)
-
-# Define the Google Vision client using the credentials
 client = vision.ImageAnnotatorClient(credentials=credentials)
+
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})  # This will enable CORS for all routes
@@ -210,4 +210,5 @@ def index():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
+
