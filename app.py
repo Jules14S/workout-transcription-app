@@ -46,47 +46,46 @@ def transcribe_text_to_table(text):
 
     for line in lines:
         line = line.replace('.', ':')  # Replace periods with colons to fix formatting issues
-
+        
         # Look for lines with a slash '/' (indicating sets/reps)
         if '/' in line:
             parts = line.split(':')
             if len(parts) < 2:
                 continue
 
-            exercise = parts[0].strip()
-            # Split by slashes to get sets
-            sets_and_weight = parts[1].split('/')
-            sets = []
+            exercise = parts[0].strip()  # Extract the exercise name
+            sets_and_rest = parts[1].strip()  # The rest contains sets and possibly weight
+            
+            # First, extract sets (everything before any parentheses)
+            sets = sets_and_rest.split('/')
+            sets = [s.strip() for s in sets if s.strip().isdigit() or s.strip() == '']
+            
+            # Now, check if there's a weight (in parentheses) after the sets
             weight = ""
+            if '(' in sets_and_rest and ')' in sets_and_rest:
+                weight = sets_and_rest.split('(')[1].split(')')[0].strip()
 
-            # Iterate over each part of sets_and_weight
-            for part in sets_and_weight:
-                # If we detect parentheses, treat it as weight, otherwise it's a set
-                if '(' in part and ')' in part:
-                    weight = part.split('(')[1].split(')')[0].strip()  # Extract the weight inside parentheses
-                else:
-                    sets.append(part.strip())
-
-            # Ensure max_sets is correct and pad with empty sets if necessary
+            # Determine the maximum number of sets seen so far
             max_sets = max(max_sets, len(sets))
-            while len(sets) < max_sets:
-                sets.append('')
 
-            # Extra info would be captured separately if needed (currently assuming none)
+            # Ensure the number of sets aligns with max_sets
+            while len(sets) < max_sets:
+                sets.append('')  # Pad with empty values if needed
+
+            # No extra info for now
             extra_info = ""
 
-            # Add row to data
+            # Add row to data with sets, weight, and extra info
             row = [exercise] + sets + [weight] + [extra_info]
             data.append(row)
 
-    # Dynamically create column headers based on max_sets and include weight and extra info
+    # Define the columns dynamically based on max_sets + Weight + Extra Info
     columns = ["Exercise"] + [f"Set {i+1}" for i in range(max_sets)] + ["Weight", "Extra Info"]
 
-    # Create DataFrame
+    # Create a DataFrame with the structured data
     df = pd.DataFrame(data, columns=columns)
     
     return df, max_sets
-
 
 
 
