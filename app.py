@@ -38,7 +38,6 @@ def extract_text_from_image(image_path):
         return texts[0].description
     return ""
 
-
 def transcribe_text_to_table(text):
     """Convert extracted text into a structured table format."""
     lines = text.split('\n')
@@ -59,19 +58,18 @@ def transcribe_text_to_table(text):
             sets = [s.strip() for s in sets if s.strip().isdigit() or s.strip() == '']
             max_sets = max(max_sets, len(sets))
 
-            # Detect weight if it's in parentheses or after all sets
+            # Check if weight is present (e.g., in parentheses after the sets)
             weight = ""
             if '(' in parts[1]:
-                weight = parts[1].split('(')[1].split(')')[0].strip()
-
+                weight_match = parts[1].split('(')[1].split(')')[0].strip()
+                if weight_match.isdigit():  # Ensure the match is a number to treat it as a weight
+                    weight = weight_match
+            
             # Ensure the number of sets aligns with max_sets
             while len(sets) < max_sets:
                 sets.append('')
 
-            # Only add weight if it's actually found and not misidentified as a set
-            if len(sets) > max_sets:
-                sets = sets[:max_sets]  # Cut off extra set-like values
-
+            # Extra info after sets or weight
             extra_info = ""
             if '(' in parts[1] and not weight:
                 extra_info = parts[1].split('(')[1].split(')')[0]
@@ -87,6 +85,7 @@ def transcribe_text_to_table(text):
     df = pd.DataFrame(data, columns=columns)
     
     return df, max_sets
+
 
 def create_excel(dataframes):
     """Create an Excel file from a list of DataFrames with a custom layout."""
