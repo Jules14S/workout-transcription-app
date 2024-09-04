@@ -39,67 +39,49 @@ def extract_text_from_image(image_path):
     return ""
 
 def transcribe_text_to_table(text):
-    """Convert extracted text into a structured table format with proper weight handling."""
+    """Convert extracted text into a structured table format"""
     lines = text.split('\n')
     data = []
     max_sets = 0
 
     for line in lines:
         line = line.replace('.', ':')  # Replace periods with colons to fix formatting issues
-        
-        # Check for lines that have sets, indicated by '/'
         if '/' in line:
             parts = line.split(':')
             if len(parts) < 2:
                 continue
-            
-            # Extract exercise name
-            exercise = parts[0].strip()
-            
-            # Extract sets and check if weight is present (using parentheses)
-            sets_and_weight = parts[1].strip()
-            sets = []
-            weight = ""
-            
-            # Split the part after colon by '/' to extract sets
-            if '(' in sets_and_weight and ')' in sets_and_weight:
-                # There is weight; extract sets and weight separately
-                sets_part = sets_and_weight.split('(')[0].strip()  # Everything before '(' is the sets
-                sets = sets_part.split('/')
-                sets = [s.strip() for s in sets if s.strip().isdigit()]  # Ensure only numbers (sets) are extracted
-                weight = sets_and_weight.split('(')[1].split(')')[0].strip()  # Extract what's inside the parentheses as weight
-            else:
-                # No weight; just process sets
-                sets = sets_and_weight.split('/')
-                sets = [s.strip() for s in sets if s.strip().isdigit()]
-
-            # Keep track of the maximum number of sets
+            sets = parts[1].strip().split('/')
+            sets = [s.strip() for s in sets if s.strip().isdigit() or s.strip() == '']
             max_sets = max(max_sets, len(sets))
 
-            # Pad sets with empty strings if fewer than max_sets
+    for line in lines:
+        line = line.replace('.', ':')  # Replace periods with colons to fix formatting issues
+        if '/' in line:
+            parts = line.split(':')
+            if len(parts) < 2:
+                continue
+
+            exercise = parts[0].strip()
+            sets = parts[1].strip().split('/')
+
+            sets = [s.strip() for s in sets if s.strip().isdigit() or s.strip() == '']
+
             while len(sets) < max_sets:
                 sets.append('')
 
-            # No extra info for now
             extra_info = ""
+            if '(' in parts[1]:
+                extra_info = parts[1].split('(')[1].split(')')[0]
 
-            # Add the row with exercise, sets, weight, and extra info
-            row = [exercise] + sets + [weight] + [extra_info]
+            row = [exercise] + sets
+            row.append(extra_info if extra_info else '')
+
             data.append(row)
 
-    # Define the columns based on max_sets, weight, and extra info
-    columns = ["Exercise"] + [f"Set {i+1}" for i in range(max_sets)] + ["Weight", "Extra Info"]
-
-    # Create a DataFrame with the structured data
-    df = pd.DataFrame(data, columns=columns)
-    
-    return df, max_sets
-
-
-
+    return data, max_sets
 
 def create_excel(dataframes):
-    """Create an Excel file from a list of DataFrames with a custom layout."""
+    """Create an Excel file from a list of DataFrames with a custom layout"""
     output = BytesIO()
 
     # Use openpyxl for writing Excel
@@ -129,9 +111,7 @@ def create_excel(dataframes):
             start_row += 1
 
             # Write the DataFrame headers manually
-            columns = ["Exercise"] + [f"Set {i+1}" for i in range(len(df.columns) - 3)] + ["Weight", "Extra Info"]
-            
-            for col_num, column_title in enumerate(columns, start=1):
+            for col_num, column_title in enumerate(df.columns, start=1):
                 cell = worksheet.cell(row=start_row, column=col_num)
                 cell.value = column_title
                 cell.font = openpyxl.styles.Font(bold=True)
@@ -191,57 +171,27 @@ def create_excel(dataframes):
     output.seek(0)
     return output
 
-
 def extract_workout_title_and_date(text):
-    """Extract the workout title and date from the text."""
+    """Extract the workout title and date from the text"""
     lines = text.split('\n')
     workout_title = ""
     workout_date = ""
     
-    # List of month keywords (including common OCR mistakes like 'me' instead of 'mai')
-    month_keywords = [
-        "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec",
-        "janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre",
-        "me"  # To account for OCR mistakes like "15 me" instead of "15 mai"
-    ]
-
-    # Process lines to find the date and workout title
     for line in lines:
-        line_lower = line.lower().strip()
-        
-        # Check if the line contains a month or a recognizable date
-        if any(month in line_lower for month in month_keywords) or any(char.isdigit() for char in line_lower):
-            # Capture a valid date-like line
-            if "date" in line_lower or any(month in line_lower for month in month_keywords):
-                workout_date = line.strip()  # Found a date line
-            else:
-                # In case a date-like structure is present, capture it
-                if not workout_date:
-                    workout_date = line.strip()
-            continue  # Move to the next line after extracting date
-        
-        # Check for workout titles (assuming titles don't have numbers or slashes)
-        if not workout_title and not any(char.isdigit() for char in line_lower) and not "/" in line_lower:
-            workout_title = line.strip()  # Update workout title
-
-        # Stop as soon as both date and title are found
+        if line.lower().startswith("date:"):
+            workout_date = line.strip()  # Assuming date is in a "Date: X" format
+        elif not workout_title and ("push" in line.lower() or "pull" in line.lower() or "legs" in line.lower()):
+            workout_title = line.strip()  # Assuming workout type like "Push", "Pull", or "Legs"
+            
         if workout_title and workout_date:
-            break
-
-    # Fallback if no title or date found
+            break  # Stop as soon as both are found
+    
     if not workout_title:
-        workout_title = "Workout"
+        workout_title = "Workout"  # Fallback if no title found
     if not workout_date:
-        workout_date = "Unknown Date"
-
-    # Ensure that if a valid date is found, "Date" isn't appended unnecessarily
-    if "date" not in workout_date.lower() and workout_date != "Unknown Date":
-        return f"{workout_date} - {workout_title}"
-    else:
-        return f"{workout_title}"
-
-
-
+        workout_date = "Unknown Date"  # Fallback if no date found
+    
+    return f"{workout_date} - {workout_title}"
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
