@@ -10,9 +10,8 @@ import openpyxl
 from openpyxl import styles
 
 # Credentials for Google Cloud Vision
-# Credentials for Google Cloud Vision
-credentials_info = json.loads(os.getenv('GOOGLE_CREDENTIALS'))
-credentials = service_account.Credentials.from_service_account_info(credentials_info)
+credentials_path = '/etc/secrets/google_credentials.json'
+credentials = service_account.Credentials.from_service_account_file(credentials_path)
 client = vision.ImageAnnotatorClient(credentials=credentials)
 
 
