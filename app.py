@@ -9,8 +9,10 @@ from google.oauth2 import service_account
 import openpyxl
 from openpyxl import styles
 
-# Credentials for Google Cloud Vision
-credentials_path = '/etc/secrets/google_credentials.json'
+# Path to the secret file mounted by Render
+credentials_path = '/etc/secrets/google_credentials'
+
+# Use the credentials to authenticate with Google Cloud Vision API
 credentials = service_account.Credentials.from_service_account_file(credentials_path)
 client = vision.ImageAnnotatorClient(credentials=credentials)
 
