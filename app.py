@@ -177,18 +177,25 @@ def extract_workout_title_and_date(text):
     workout_title = ""
     workout_date = ""
     
+    # List of month keywords (including French for this example)
+    month_keywords = [
+        "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec",
+        "janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"
+    ]
+
     for line in lines:
         line_lower = line.lower().strip()
         
         # Check if the line looks like a date (contains a number and a month or starts with "date:")
-        if "date" in line_lower or any(month in line_lower for month in ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]) or any(char.isdigit() for char in line_lower):
-            workout_date = line.strip()
+        if "date" in line_lower or any(month in line_lower for month in month_keywords) or any(char.isdigit() for char in line_lower):
+            workout_date = line.strip()  # Update workout date
+            continue  # Move to next line after extracting date
         
-        # If the line doesn't look like a date or exercise and is not empty, use it as the title
+        # Check for unexpected workout types or titles (assuming they don't contain numbers or slashes)
         if not workout_title and not any(char.isdigit() for char in line_lower) and not "/" in line_lower:
-            workout_title = line.strip()
+            workout_title = line.strip()  # Update workout title
 
-        # Stop as soon as both are found
+        # Stop as soon as both date and title are found
         if workout_title and workout_date:
             break
 
@@ -199,6 +206,7 @@ def extract_workout_title_and_date(text):
         workout_date = "Unknown Date"
 
     return f"{workout_date} - {workout_title}"
+
 
 
 @app.route('/', methods=['GET', 'POST'])
