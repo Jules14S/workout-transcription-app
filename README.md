@@ -18,4 +18,10 @@ handles multiple image uploads, extracting data such as date, exercise name, set
 - Each table contains the date, exercise name, sets, reps, and additional info.
 - Excel file is returned with each table on a signel sheet.
 
+## Project Structure
+
+├── app.py                # Main Flask application
+├── requirements.txt      # Python dependencies
+├── uploads/              # Directory where uploaded images are temporarily saved
+└── README.md             # This file
 
