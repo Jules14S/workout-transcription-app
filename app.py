@@ -3,15 +3,17 @@ from flask_cors import CORS
 from google.cloud import vision
 import pandas as pd
 import os
+import json
 from io import BytesIO
 from google.oauth2 import service_account
 import openpyxl
 from openpyxl import styles
 
 # Credentials for Google Cloud Vision
-credentials = service_account.Credentials.from_service_account_file(
-    r'C:\Users\jsalv\workout-transcription-app\google_credentials.json')
+credentials_info = json.loads(os.getenv('GOOGLE_CREDENTIALS'))
+credentials = service_account.Credentials.from_service_account_info(credentials_info)
 
+# Define the Google Vision client using the credentials
 client = vision.ImageAnnotatorClient(credentials=credentials)
 
 app = Flask(__name__)

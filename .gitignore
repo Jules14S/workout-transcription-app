@@ -2,3 +2,6 @@ google_credentials.json
 node_modules/
 *.log
 .env
+__pycache__/
+venv/
+uploads/
