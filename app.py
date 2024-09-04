@@ -10,7 +10,7 @@ import openpyxl
 from openpyxl import styles
 
 # Path to the secret file mounted by Render
-credentials_path = '/etc/secrets/google_credentials'
+credentials_path = '/etc/secrets/google_credentials.json'
 
 # Use the credentials to authenticate with Google Cloud Vision API
 credentials = service_account.Credentials.from_service_account_file(credentials_path)
