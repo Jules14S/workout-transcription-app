@@ -39,7 +39,7 @@ def extract_text_from_image(image_path):
     return ""
 
 def transcribe_text_to_table(text):
-    """Convert extracted text into a structured table format."""
+    """Convert extracted text into a structured table format with proper weight handling."""
     lines = text.split('\n')
     data = []
     max_sets = 0
@@ -47,45 +47,54 @@ def transcribe_text_to_table(text):
     for line in lines:
         line = line.replace('.', ':')  # Replace periods with colons to fix formatting issues
         
-        # Look for lines with a slash '/' (indicating sets/reps)
+        # Check for lines that have sets, indicated by '/'
         if '/' in line:
             parts = line.split(':')
             if len(parts) < 2:
                 continue
-
-            exercise = parts[0].strip()  # Extract the exercise name
-            sets_and_rest = parts[1].strip()  # The rest contains sets and possibly weight
             
-            # First, extract sets (everything before any parentheses)
-            sets = sets_and_rest.split('/')
-            sets = [s.strip() for s in sets if s.strip().isdigit() or s.strip() == '']
+            # Extract exercise name
+            exercise = parts[0].strip()
             
-            # Now, check if there's a weight (in parentheses) after the sets
+            # Extract sets and check if weight is present (using parentheses)
+            sets_and_weight = parts[1].strip()
+            sets = []
             weight = ""
-            if '(' in sets_and_rest and ')' in sets_and_rest:
-                weight = sets_and_rest.split('(')[1].split(')')[0].strip()
+            
+            # Split the part after colon by '/' to extract sets
+            if '(' in sets_and_weight and ')' in sets_and_weight:
+                # There is weight; extract sets and weight separately
+                sets_part = sets_and_weight.split('(')[0].strip()  # Everything before '(' is the sets
+                sets = sets_part.split('/')
+                sets = [s.strip() for s in sets if s.strip().isdigit()]  # Ensure only numbers (sets) are extracted
+                weight = sets_and_weight.split('(')[1].split(')')[0].strip()  # Extract what's inside the parentheses as weight
+            else:
+                # No weight; just process sets
+                sets = sets_and_weight.split('/')
+                sets = [s.strip() for s in sets if s.strip().isdigit()]
 
-            # Determine the maximum number of sets seen so far
+            # Keep track of the maximum number of sets
             max_sets = max(max_sets, len(sets))
 
-            # Ensure the number of sets aligns with max_sets
+            # Pad sets with empty strings if fewer than max_sets
             while len(sets) < max_sets:
-                sets.append('')  # Pad with empty values if needed
+                sets.append('')
 
             # No extra info for now
             extra_info = ""
 
-            # Add row to data with sets, weight, and extra info
+            # Add the row with exercise, sets, weight, and extra info
             row = [exercise] + sets + [weight] + [extra_info]
             data.append(row)
 
-    # Define the columns dynamically based on max_sets + Weight + Extra Info
+    # Define the columns based on max_sets, weight, and extra info
     columns = ["Exercise"] + [f"Set {i+1}" for i in range(max_sets)] + ["Weight", "Extra Info"]
 
     # Create a DataFrame with the structured data
     df = pd.DataFrame(data, columns=columns)
     
     return df, max_sets
+
 
 
 
