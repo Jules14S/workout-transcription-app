@@ -38,6 +38,7 @@ def extract_text_from_image(image_path):
         return texts[0].description
     return ""
 
+
 def transcribe_text_to_table(text):
     """Convert extracted text into a structured table format."""
     lines = text.split('\n')
@@ -75,7 +76,13 @@ def transcribe_text_to_table(text):
             row = [exercise] + sets + [weight] + [extra_info if extra_info else '']
             data.append(row)
 
-    return data, max_sets
+    # Define the columns dynamically based on the number of sets, plus weight and extra info
+    columns = ["Exercise"] + [f"Set {i+1}" for i in range(max_sets)] + ["Weight", "Extra Info"]
+
+    # Create a DataFrame with the structured data
+    df = pd.DataFrame(data, columns=columns)
+    
+    return df, max_sets
 
 def create_excel(dataframes):
     """Create an Excel file from a list of DataFrames with a custom layout."""
