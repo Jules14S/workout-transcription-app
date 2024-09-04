@@ -38,7 +38,6 @@ def extract_text_from_image(image_path):
         return texts[0].description
     return ""
 
-
 def transcribe_text_to_table(text):
     """Convert extracted text into a structured table format."""
     lines = text.split('\n')
@@ -55,25 +54,26 @@ def transcribe_text_to_table(text):
                 continue
             
             exercise = parts[0].strip()
+            # Extract sets by splitting the part after the colon
             sets = parts[1].strip().split('/')
             sets = [s.strip() for s in sets if s.strip().isdigit() or s.strip() == '']
             max_sets = max(max_sets, len(sets))
 
-            # Check if weight is present (only if there are parentheses)
+            # Check for weight if parentheses exist, otherwise leave the weight empty
             weight = ""
             if '(' in parts[1] and ')' in parts[1]:
                 weight = parts[1].split('(')[1].split(')')[0].strip()
-            
-            # Ensure the number of sets aligns with max_sets, leave weight column empty if weight isn't found
+
+            # Ensure sets always match max_sets, append empty strings if fewer sets
             while len(sets) < max_sets:
                 sets.append('')
-            
-            # Extra info after sets or weight
+
+            # Capture extra info if present (only if there's extra information after sets)
             extra_info = ""
             if '(' in parts[1] and not weight:
                 extra_info = parts[1].split('(')[1].split(')')[0]
             
-            # Add row with exercise, sets, weight, and extra info
+            # Create the row: exercise, sets, weight, and extra info
             row = [exercise] + sets + [weight] + [extra_info if extra_info else '']
             data.append(row)
 
@@ -84,7 +84,6 @@ def transcribe_text_to_table(text):
     df = pd.DataFrame(data, columns=columns)
     
     return df, max_sets
-
 
 
 
