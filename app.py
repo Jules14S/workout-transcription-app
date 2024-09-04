@@ -37,6 +37,8 @@ def extract_text_from_image(image_path):
     if len(texts) > 0:
         return texts[0].description
     return ""
+
+
 def transcribe_text_to_table(text):
     """Convert extracted text into a structured table format."""
     lines = text.split('\n')
@@ -57,13 +59,10 @@ def transcribe_text_to_table(text):
             sets = [s.strip() for s in sets if s.strip().isdigit() or s.strip() == '']
             max_sets = max(max_sets, len(sets))
 
-            # Check if weight is present (e.g., in parentheses after the sets)
+            # Check if weight is present (only if there are parentheses)
             weight = ""
-            # Split on parentheses and ensure we only treat the content as weight if it's numeric
-            if '(' in parts[1]:
-                weight_match = parts[1].split('(')[1].split(')')[0].strip()
-                if weight_match.replace('.', '').isdigit():  # Check if it's a number
-                    weight = weight_match
+            if '(' in parts[1] and ')' in parts[1]:
+                weight = parts[1].split('(')[1].split(')')[0].strip()
             
             # Ensure the number of sets aligns with max_sets, leave weight column empty if weight isn't found
             while len(sets) < max_sets:
@@ -85,6 +84,7 @@ def transcribe_text_to_table(text):
     df = pd.DataFrame(data, columns=columns)
     
     return df, max_sets
+
 
 
 
