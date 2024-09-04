@@ -172,26 +172,34 @@ def create_excel(dataframes):
     return output
 
 def extract_workout_title_and_date(text):
-    """Extract the workout title and date from the text"""
+    """Extract the workout title and date from the text."""
     lines = text.split('\n')
     workout_title = ""
     workout_date = ""
     
     for line in lines:
-        if line.lower().startswith("date:"):
-            workout_date = line.strip()  # Assuming date is in a "Date: X" format
-        elif not workout_title and ("push" in line.lower() or "pull" in line.lower() or "legs" in line.lower()):
-            workout_title = line.strip()  # Assuming workout type like "Push", "Pull", or "Legs"
-            
+        line_lower = line.lower().strip()
+        
+        # Check if the line looks like a date (contains a number and a month or starts with "date:")
+        if "date" in line_lower or any(month in line_lower for month in ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]) or any(char.isdigit() for char in line_lower):
+            workout_date = line.strip()
+        
+        # If the line doesn't look like a date or exercise and is not empty, use it as the title
+        if not workout_title and not any(char.isdigit() for char in line_lower) and not "/" in line_lower:
+            workout_title = line.strip()
+
+        # Stop as soon as both are found
         if workout_title and workout_date:
-            break  # Stop as soon as both are found
-    
+            break
+
+    # Fallback if no title or date found
     if not workout_title:
-        workout_title = "Workout"  # Fallback if no title found
+        workout_title = "Workout"
     if not workout_date:
-        workout_date = "Unknown Date"  # Fallback if no date found
-    
+        workout_date = "Unknown Date"
+
     return f"{workout_date} - {workout_title}"
+
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
