@@ -177,21 +177,27 @@ def extract_workout_title_and_date(text):
     workout_title = ""
     workout_date = ""
     
-    # List of month keywords (including French for this example)
+    # List of month keywords (including French)
     month_keywords = [
         "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec",
         "janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"
     ]
 
+    # Process lines to find the date and workout title
     for line in lines:
         line_lower = line.lower().strip()
         
-        # Check if the line looks like a date (contains a number and a month or starts with "date:")
-        if "date" in line_lower or any(month in line_lower for month in month_keywords) or any(char.isdigit() for char in line_lower):
-            workout_date = line.strip()  # Update workout date
-            continue  # Move to next line after extracting date
+        # Check if the line contains a month or a recognizable date
+        if any(month in line_lower for month in month_keywords) or any(char.isdigit() for char in line_lower):
+            if "date" in line_lower or any(month in line_lower for month in month_keywords):
+                workout_date = line.strip()  # Found a date line
+            else:
+                # In case a date-like structure is present, capture it
+                if not workout_date:
+                    workout_date = line.strip()  
+            continue  # Move to the next line after extracting date
         
-        # Check for unexpected workout types or titles (assuming they don't contain numbers or slashes)
+        # Check for workout titles (assuming titles don't have numbers or slashes)
         if not workout_title and not any(char.isdigit() for char in line_lower) and not "/" in line_lower:
             workout_title = line.strip()  # Update workout title
 
@@ -206,6 +212,7 @@ def extract_workout_title_and_date(text):
         workout_date = "Unknown Date"
 
     return f"{workout_date} - {workout_title}"
+
 
 
 
