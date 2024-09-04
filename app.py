@@ -211,7 +211,11 @@ def extract_workout_title_and_date(text):
     if not workout_date:
         workout_date = "Unknown Date"
 
-    return f"{workout_date} - {workout_title}"
+    # Ensure that if a date is found, "Date" isn't appended unnecessarily
+    if "date" not in workout_date.lower():
+        return f"{workout_date} - {workout_title}"
+    else:
+        return f"{workout_title}"  # If no real date found, just return the workout title
 
 
 
