@@ -177,10 +177,11 @@ def extract_workout_title_and_date(text):
     workout_title = ""
     workout_date = ""
     
-    # List of month keywords (including French)
+    # List of month keywords (including common OCR mistakes like 'me' instead of 'mai')
     month_keywords = [
         "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec",
-        "janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"
+        "janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre",
+        "me"  # To account for OCR mistakes like "15 me" instead of "15 mai"
     ]
 
     # Process lines to find the date and workout title
@@ -189,12 +190,13 @@ def extract_workout_title_and_date(text):
         
         # Check if the line contains a month or a recognizable date
         if any(month in line_lower for month in month_keywords) or any(char.isdigit() for char in line_lower):
+            # Capture a valid date-like line
             if "date" in line_lower or any(month in line_lower for month in month_keywords):
                 workout_date = line.strip()  # Found a date line
             else:
                 # In case a date-like structure is present, capture it
                 if not workout_date:
-                    workout_date = line.strip()  
+                    workout_date = line.strip()
             continue  # Move to the next line after extracting date
         
         # Check for workout titles (assuming titles don't have numbers or slashes)
@@ -211,11 +213,11 @@ def extract_workout_title_and_date(text):
     if not workout_date:
         workout_date = "Unknown Date"
 
-    # Ensure that if a date is found, "Date" isn't appended unnecessarily
-    if "date" not in workout_date.lower():
+    # Ensure that if a valid date is found, "Date" isn't appended unnecessarily
+    if "date" not in workout_date.lower() and workout_date != "Unknown Date":
         return f"{workout_date} - {workout_title}"
     else:
-        return f"{workout_title}"  # If no real date found, just return the workout title
+        return f"{workout_title}"
 
 
 
