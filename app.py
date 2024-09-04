@@ -46,44 +46,47 @@ def transcribe_text_to_table(text):
 
     for line in lines:
         line = line.replace('.', ':')  # Replace periods with colons to fix formatting issues
-        
+
         # Look for lines with a slash '/' (indicating sets/reps)
         if '/' in line:
             parts = line.split(':')
             if len(parts) < 2:
                 continue
-            
+
             exercise = parts[0].strip()
-            # Extract sets by splitting the part after the colon
-            sets = parts[1].strip().split('/')
-            sets = [s.strip() for s in sets if s.strip().isdigit() or s.strip() == '']
-            max_sets = max(max_sets, len(sets))
-
-            # Check for weight if parentheses exist, otherwise leave the weight empty
+            # Split by slashes to get sets
+            sets_and_weight = parts[1].split('/')
+            sets = []
             weight = ""
-            if '(' in parts[1] and ')' in parts[1]:
-                weight = parts[1].split('(')[1].split(')')[0].strip()
 
-            # Ensure sets always match max_sets, append empty strings if fewer sets
+            # Iterate over each part of sets_and_weight
+            for part in sets_and_weight:
+                # If we detect parentheses, treat it as weight, otherwise it's a set
+                if '(' in part and ')' in part:
+                    weight = part.split('(')[1].split(')')[0].strip()  # Extract the weight inside parentheses
+                else:
+                    sets.append(part.strip())
+
+            # Ensure max_sets is correct and pad with empty sets if necessary
+            max_sets = max(max_sets, len(sets))
             while len(sets) < max_sets:
                 sets.append('')
 
-            # Capture extra info if present (only if there's extra information after sets)
+            # Extra info would be captured separately if needed (currently assuming none)
             extra_info = ""
-            if '(' in parts[1] and not weight:
-                extra_info = parts[1].split('(')[1].split(')')[0]
-            
-            # Create the row: exercise, sets, weight, and extra info
-            row = [exercise] + sets + [weight] + [extra_info if extra_info else '']
+
+            # Add row to data
+            row = [exercise] + sets + [weight] + [extra_info]
             data.append(row)
 
-    # Define the columns dynamically based on the number of sets, plus weight and extra info
+    # Dynamically create column headers based on max_sets and include weight and extra info
     columns = ["Exercise"] + [f"Set {i+1}" for i in range(max_sets)] + ["Weight", "Extra Info"]
 
-    # Create a DataFrame with the structured data
+    # Create DataFrame
     df = pd.DataFrame(data, columns=columns)
     
     return df, max_sets
+
 
 
 
