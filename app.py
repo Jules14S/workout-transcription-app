@@ -59,14 +59,18 @@ def transcribe_text_to_table(text):
             sets = [s.strip() for s in sets if s.strip().isdigit() or s.strip() == '']
             max_sets = max(max_sets, len(sets))
 
-            # Check if weight is present (e.g., in parentheses or some other indicator)
+            # Detect weight if it's in parentheses or after all sets
             weight = ""
             if '(' in parts[1]:
                 weight = parts[1].split('(')[1].split(')')[0].strip()
-            
+
             # Ensure the number of sets aligns with max_sets
             while len(sets) < max_sets:
                 sets.append('')
+
+            # Only add weight if it's actually found and not misidentified as a set
+            if len(sets) > max_sets:
+                sets = sets[:max_sets]  # Cut off extra set-like values
 
             extra_info = ""
             if '(' in parts[1] and not weight:
