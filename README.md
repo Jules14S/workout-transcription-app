@@ -18,7 +18,6 @@ handles multiple image uploads, extracting data such as date, exercise name, set
 - Each table contains the date, exercise name, sets, reps, and additional info.
 - Excel file is returned with each table on a signel sheet.
 
-      ```
 ## Project Structure
 
 ```bash
