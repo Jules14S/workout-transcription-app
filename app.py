@@ -171,29 +171,34 @@ def create_excel(dataframes):
     return output
 
 
-
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
         try:
             files = request.files.getlist('files[]')
             if not files:
+                print("No files received")
                 return jsonify({"error": "No files received"}), 400
 
             dataframes = []
             for i, file in enumerate(files):
                 file_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+                print(f"Saving file: {file.filename} at {file_path}")
                 file.save(file_path)
+                
+                # Extract text
                 text = extract_text_from_image(file_path)
+                print(f"Extracted text: {text}")
 
                 # Process the extracted text into table data
                 table_data, max_sets = transcribe_text_to_table(text)
+                print(f"Table data: {table_data}")
 
                 # Create a DataFrame with the correct number of sets
                 df = pd.DataFrame(table_data, columns=["Exercise"] + [f"Set {j+1}" for j in range(max_sets)] + ["Extra Info"])
 
                 # Append the DataFrame with the correct sheet name and title
-                date_workout_type = f"Workout {i+1} - Extracted Title/Date"  # Customize title if necessary
+                date_workout_type = f"Workout {i+1} - Extracted Title/Date"
                 dataframes.append((df, f"Sheet{i+1}", date_workout_type))
 
             # Generate the Excel file with multiple sheets
