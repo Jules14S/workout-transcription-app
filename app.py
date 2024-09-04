@@ -39,49 +39,46 @@ def extract_text_from_image(image_path):
     return ""
 
 def transcribe_text_to_table(text):
-    """Convert extracted text into a structured table format"""
+    """Convert extracted text into a structured table format."""
     lines = text.split('\n')
     data = []
     max_sets = 0
 
     for line in lines:
         line = line.replace('.', ':')  # Replace periods with colons to fix formatting issues
+        
+        # Look for lines with a slash '/' (indicating sets/reps)
         if '/' in line:
             parts = line.split(':')
             if len(parts) < 2:
                 continue
+            
+            exercise = parts[0].strip()
             sets = parts[1].strip().split('/')
             sets = [s.strip() for s in sets if s.strip().isdigit() or s.strip() == '']
             max_sets = max(max_sets, len(sets))
 
-    for line in lines:
-        line = line.replace('.', ':')  # Replace periods with colons to fix formatting issues
-        if '/' in line:
-            parts = line.split(':')
-            if len(parts) < 2:
-                continue
-
-            exercise = parts[0].strip()
-            sets = parts[1].strip().split('/')
-
-            sets = [s.strip() for s in sets if s.strip().isdigit() or s.strip() == '']
-
+            # Check if weight is present (e.g., in parentheses or some other indicator)
+            weight = ""
+            if '(' in parts[1]:
+                weight = parts[1].split('(')[1].split(')')[0].strip()
+            
+            # Ensure the number of sets aligns with max_sets
             while len(sets) < max_sets:
                 sets.append('')
 
             extra_info = ""
-            if '(' in parts[1]:
+            if '(' in parts[1] and not weight:
                 extra_info = parts[1].split('(')[1].split(')')[0]
-
-            row = [exercise] + sets
-            row.append(extra_info if extra_info else '')
-
+            
+            # Add row with exercise, sets, weight, and extra info
+            row = [exercise] + sets + [weight] + [extra_info if extra_info else '']
             data.append(row)
 
     return data, max_sets
 
 def create_excel(dataframes):
-    """Create an Excel file from a list of DataFrames with a custom layout"""
+    """Create an Excel file from a list of DataFrames with a custom layout."""
     output = BytesIO()
 
     # Use openpyxl for writing Excel
@@ -111,7 +108,9 @@ def create_excel(dataframes):
             start_row += 1
 
             # Write the DataFrame headers manually
-            for col_num, column_title in enumerate(df.columns, start=1):
+            columns = ["Exercise"] + [f"Set {i+1}" for i in range(len(df.columns) - 3)] + ["Weight", "Extra Info"]
+            
+            for col_num, column_title in enumerate(columns, start=1):
                 cell = worksheet.cell(row=start_row, column=col_num)
                 cell.value = column_title
                 cell.font = openpyxl.styles.Font(bold=True)
@@ -170,6 +169,7 @@ def create_excel(dataframes):
 
     output.seek(0)
     return output
+
 
 def extract_workout_title_and_date(text):
     """Extract the workout title and date from the text."""
