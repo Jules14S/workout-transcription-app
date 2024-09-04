@@ -16,7 +16,6 @@ credentials_path = '/etc/secrets/google_credentials.json'
 credentials = service_account.Credentials.from_service_account_file(credentials_path)
 client = vision.ImageAnnotatorClient(credentials=credentials)
 
-
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})  # This will enable CORS for all routes
 
@@ -172,6 +171,27 @@ def create_excel(dataframes):
     output.seek(0)
     return output
 
+def extract_workout_title_and_date(text):
+    """Extract the workout title and date from the text"""
+    lines = text.split('\n')
+    workout_title = ""
+    workout_date = ""
+    
+    for line in lines:
+        if line.lower().startswith("date:"):
+            workout_date = line.strip()  # Assuming date is in a "Date: X" format
+        elif not workout_title and ("push" in line.lower() or "pull" in line.lower() or "legs" in line.lower()):
+            workout_title = line.strip()  # Assuming workout type like "Push", "Pull", or "Legs"
+            
+        if workout_title and workout_date:
+            break  # Stop as soon as both are found
+    
+    if not workout_title:
+        workout_title = "Workout"  # Fallback if no title found
+    if not workout_date:
+        workout_date = "Unknown Date"  # Fallback if no date found
+    
+    return f"{workout_date} - {workout_title}"
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -192,6 +212,10 @@ def index():
                 text = extract_text_from_image(file_path)
                 print(f"Extracted text: {text}")
 
+                # Extract workout title and date
+                workout_title_and_date = extract_workout_title_and_date(text)
+                print(f"Workout title and date: {workout_title_and_date}")
+
                 # Process the extracted text into table data
                 table_data, max_sets = transcribe_text_to_table(text)
                 print(f"Table data: {table_data}")
@@ -200,8 +224,7 @@ def index():
                 df = pd.DataFrame(table_data, columns=["Exercise"] + [f"Set {j+1}" for j in range(max_sets)] + ["Extra Info"])
 
                 # Append the DataFrame with the correct sheet name and title
-                date_workout_type = f"Workout {i+1} - Extracted Title/Date"
-                dataframes.append((df, f"Sheet{i+1}", date_workout_type))
+                dataframes.append((df, f"Sheet{i+1}", workout_title_and_date))
 
             # Generate the Excel file with multiple sheets
             excel_data = create_excel(dataframes)
@@ -214,7 +237,5 @@ def index():
 
     return jsonify({"message": "Upload your files"}), 200
 
-
 if __name__ == '__main__':
     app.run()
-
